@@ -14,7 +14,7 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
-#include "Adafruit_MAX31855.h"
+#include "HP_MAX31855.h"
 #ifdef __AVR
   #include <avr/pgmspace.h>
 #elif defined(ESP8266)
@@ -24,8 +24,9 @@
 #include <stdlib.h>
 #include <SPI.h>
 
+MAX31855SPI SPISettings(4000000,MSBFIRST,SPI_MODE0);
 
-Adafruit_MAX31855::Adafruit_MAX31855(int8_t _sclk, int8_t _cs, int8_t _miso) {
+HP_MAX31855::HP_MAX31855(int8_t _sclk, int8_t _cs, int8_t _miso) {
   sclk = _sclk;
   cs = _cs;
   miso = _miso;
@@ -33,14 +34,14 @@ Adafruit_MAX31855::Adafruit_MAX31855(int8_t _sclk, int8_t _cs, int8_t _miso) {
   initialized = false;
 }
 
-Adafruit_MAX31855::Adafruit_MAX31855(int8_t _cs) {
+HP_MAX31855::HP_MAX31855(int8_t _cs) {
   cs = _cs;
   sclk = miso = -1;
 
   initialized = false;
 }
 
-void Adafruit_MAX31855::begin(void) {
+void HP_MAX31855::begin(void) {
   //define pin modes
   pinMode(cs, OUTPUT);
   digitalWrite(cs, HIGH);
@@ -56,7 +57,7 @@ void Adafruit_MAX31855::begin(void) {
   initialized = true;
 }
 
-double Adafruit_MAX31855::readInternal(void) {
+double HP_MAX31855::readInternal(void) {
   uint32_t v;
 
   v = spiread32();
@@ -77,9 +78,9 @@ double Adafruit_MAX31855::readInternal(void) {
   return internal;
 }
 
-double Adafruit_MAX31855::readCelsius(void) {
+double HP_MAX31855::readCelsius(void) {
 
-  int32_t v;
+  uint32_t v;
 
   v = spiread32();
 
@@ -94,7 +95,8 @@ double Adafruit_MAX31855::readCelsius(void) {
   */
 
   if (v & 0x7) {
-    // uh oh, a serious problem!
+    // error, check error codes on datasheet
+    err = v & 0x7;
     return NAN; 
   }
 
@@ -115,11 +117,11 @@ double Adafruit_MAX31855::readCelsius(void) {
   return centigrade;
 }
 
-uint8_t Adafruit_MAX31855::readError() {
-  return spiread32() & 0x7;
+uint8_t HP_MAX31855::readError() {
+  return err;
 }
 
-double Adafruit_MAX31855::readFarenheit(void) {
+double HP_MAX31855::readFarenheit(void) {
   float f = readCelsius();
   f *= 9.0;
   f /= 5.0;
@@ -127,7 +129,7 @@ double Adafruit_MAX31855::readFarenheit(void) {
   return f;
 }
 
-uint32_t Adafruit_MAX31855::spiread32(void) { 
+uint32_t HP_MAX31855::spiread32(void) { 
   int i;
   uint32_t d = 0;
 
@@ -142,8 +144,7 @@ uint32_t Adafruit_MAX31855::spiread32(void) {
   if(sclk == -1) {
     // hardware SPI
 
-    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
-
+    SPI.beginTransaction(MAX31855SPI);
     d = SPI.transfer(0);
     d <<= 8;
     d |= SPI.transfer(0);
@@ -151,7 +152,6 @@ uint32_t Adafruit_MAX31855::spiread32(void) {
     d |= SPI.transfer(0);
     d <<= 8;
     d |= SPI.transfer(0);
-
     SPI.endTransaction();
   } else {
     // software SPI
