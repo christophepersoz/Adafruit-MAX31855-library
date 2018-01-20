@@ -1,4 +1,4 @@
-# Adafruit-MAX31855-library
+# HP-MAX31855
 <!-- START COMPATIBILITY TABLE -->
 
 ## Compatibility
