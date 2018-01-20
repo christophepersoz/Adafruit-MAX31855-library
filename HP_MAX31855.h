@@ -23,26 +23,32 @@
  #include "WProgram.h"
 #endif
 
-class HP_MAX31855 {
- public:
-  HP_MAX31855(int8_t _sclk, int8_t _cs, int8_t _miso);
-  HP_MAX31855(int8_t _cs);
+#define FAULT_OPEN		0x1
+#define FAULT_SHORT_GND 0x2
+#define FAULT_SHORT_VCC 0x4
 
-  void begin(void);
-  double readInternal(void);
-  double readCelsius(void);
-  double readFarenheit(void);
-  void setVerbose();
-  boolean getVerbose();
-  uint8_t getError();
+class HP_MAX31855
+{
+	public:
+		HP_MAX31855(int8_t _sclk, int8_t _cs, int8_t _miso);
+		HP_MAX31855(int8_t _cs);
 
- private:
-  boolean initialized;
-  boolean printout;
+		void begin(void);
+		double readInternal(void);
+		double readCelsius(void);
+		double readFarenheit(void);
+		void setVerbose(boolean _printout);
+		boolean getVerbose();
+		uint8_t getError();
 
-  int8_t sclk, miso, cs;
-  uint8_t err;
-  uint32_t spiread32(void);
+	private:
+		boolean initialized;
+		boolean printout;
+
+		int8_t sclk, miso, cs;
+		uint8_t err;
+		uint32_t spiread32(void);
+		void BinaryStrZeroPad(int32_t _number, signed char _zeroPadding);
 };
 
 #endif
